@@ -47,7 +47,7 @@ func hash(input string) string {
 
 func main() {
 
-	blockchain := Construct_blockchain(50, 20, 1);
+	blockchain := Construct_blockchain(50, 20);
 	blockchainPointer := &blockchain;
 
 	var networkManager NetworkManager;

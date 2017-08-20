@@ -9,6 +9,7 @@ type Block struct {
 	Index int
     Timestamp int
     Difficulty int
+    NextBlockDifficulty int
     Data string
     Hash string
     PreviousHash string
@@ -21,13 +22,15 @@ type Block struct {
 func Construct_block(indexVal int,
     timestampVal int,
     difficultyVal int,
+    nextBlockDifficultyVal int,
     dataVal string,
     hashVal string,
     previousHashVal string,
     nonceVal int) Block {
-	block := Block{Index: indexVal, 
-						Timestamp: timestampVal, 
+	block := Block{Index: indexVal,
+						Timestamp: timestampVal,
 						Difficulty: difficultyVal,
+						NextBlockDifficulty: nextBlockDifficultyVal,
 						Data: dataVal,
 						Hash: hashVal,
 						PreviousHash: previousHashVal,
@@ -37,7 +40,7 @@ func Construct_block(indexVal int,
 
 
 func(block Block) calculate_hash() string {
-    total := strconv.Itoa(block.Index) + strconv.Itoa(block.Nonce) + block.PreviousHash + strconv.Itoa(block.Difficulty) + strconv.Itoa(block.Timestamp) + block.Data;
+    total := strconv.Itoa(block.Index) + strconv.Itoa(block.Nonce) + block.PreviousHash + strconv.Itoa(block.Difficulty) + strconv.Itoa(block.NextBlockDifficulty) + strconv.Itoa(block.Timestamp) + block.Data;
     return hash(total);
 }
 
