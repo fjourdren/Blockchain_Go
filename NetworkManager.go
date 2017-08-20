@@ -44,7 +44,7 @@ func Construct_Init_NetworkManager(index int, popularity int, host string, port 
 
 	response, err := networkManager.Peers[0].request("/join?popularity=" + strconv.Itoa(networkManager.Me.Popularity) + "&host=" + networkManager.Me.Host + "&port=" + strconv.Itoa(networkManager.Me.Port));
 	if err != nil {
-	    panic(err.Error());
+	    networkManager.remove_Peer(networkManager.Peers[0]);
 	}
 
 
@@ -182,7 +182,7 @@ func(networkManager *NetworkManager) server() {
 			peer := Construct_peer(index, popularity, request.URL.Query().Get("host"), port);
 
 			//update Peer
-			networkManager.update_Peer(networkManager.Peers[networkManager.get_peer_from_index(peer.Index)], peer);		
+			networkManager.update_Peer(networkManager.Peers[networkManager.get_peer_from_index(peer.Index)], peer);
 
 			if indexBlock > networkManager.Blockchain.get_latest_block().Index {
 				networkManager.syncChain(peer, indexBlock);
@@ -220,8 +220,8 @@ func(networkManager *NetworkManager) server() {
 			peer := Construct_peer(index, popularity, request.URL.Query().Get("host"), port);
 
 			//update Peer
-			networkManager.update_Peer(networkManager.Peers[networkManager.get_peer_from_index(peer.Index)], peer);		
-			
+			networkManager.update_Peer(networkManager.Peers[networkManager.get_peer_from_index(peer.Index)], peer);
+
 			networkManager.LastBlockIndex = networkManager.Blockchain.get_latest_block().Index;
 
 			payload, _ := json.Marshal(networkManager);
@@ -307,7 +307,10 @@ func(networkManager *NetworkManager) has_peer(peer Peer) bool {
 
 func(networkManager *NetworkManager) broadcast(url string) {
 	for _, peer := range networkManager.Peers {
-	    peer.request(url);
+	    _, err := peer.request(url);
+      if err != nil {
+    	    networkManager.remove_Peer(peer);
+    	}
 	}
 }
 
@@ -315,8 +318,11 @@ func(networkManager *NetworkManager) broadcast(url string) {
 func(networkManager *NetworkManager) download_block(peer Peer, startIndex int, stopIndex int) []Block {
 	startIndexString := strconv.Itoa(startIndex);
 	stopIndexString := strconv.Itoa(stopIndex);
-	
-	content, _ := peer.request("/getblock?startIndex=" + startIndexString + "&stopIndex=" + stopIndexString);
+
+	content, err := peer.request("/getblock?startIndex=" + startIndexString + "&stopIndex=" + stopIndexString);
+  if err != nil {
+      networkManager.remove_Peer(peer);
+  }
 
 	body, err := ioutil.ReadAll(content.Body)
 	if err != nil {
@@ -421,7 +427,7 @@ func(networkManager *NetworkManager) syncChain(peer Peer, index int) {
 		added := 0;
 
 		for blockchainTest.is_valid() {
-			
+
 			startIndex := index - added - nbBlockDownloadInSameTime;
 			stopIndex := index - added - 1;
 
@@ -465,7 +471,7 @@ func(networkManager *NetworkManager) syncChain(peer Peer, index int) {
 
 
 	/*else {
-	 	
+
 	 	run := 0;
 	 	added := 0;
 
@@ -484,7 +490,7 @@ func(networkManager *NetworkManager) syncChain(peer Peer, index int) {
 
 	 		//download blocks
 		  	blocks := networkManager.download_block(peer, low_index, index - run);
-			
+
 			for _, block_to_add := range blocks {
 				index_in_chain := block_is_in_chain(block_to_add, added_blocks);
 				if index_in_chain > -1 {
@@ -508,7 +514,7 @@ func(networkManager *NetworkManager) syncChain(peer Peer, index int) {
 		fmt.Println(strconv.Itoa(added) + " blocks from blockchain downloaded.");
 	}*/
 
- 	
+
 
 
 
@@ -540,6 +546,9 @@ func(networkManager *NetworkManager) randomPeer(url string) (*http.Response, err
 	n := rand.Int() % len(networkManager.Peers);
 	peer := networkManager.Peers[n];
 	response, err := peer.request(url);
+  if err != nil {
+      networkManager.remove_Peer(peer);
+  }
 
 	return response, err;
 

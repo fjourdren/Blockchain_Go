@@ -14,8 +14,8 @@ type Peer struct {
 
 
 func Construct_peer(index int, popularity int, host string, port int) Peer {
-	peer := Peer{Index: index, 
-				Popularity: popularity, 
+	peer := Peer{Index: index,
+				Popularity: popularity,
 				Host: host,
 				Port: port};
 

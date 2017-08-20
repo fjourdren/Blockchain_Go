@@ -65,27 +65,26 @@ func miner(networkManager *NetworkManager) {
 				if len(networkManager.Peers) > 0 {
 					//ask to random peer the network if he has better block
 					response, err := networkManager.randomPeer("/synch?indexBlock=" + strconv.Itoa(networkManager.Blockchain.get_latest_block().Index) + "&index=" + strconv.Itoa(networkManager.Me.Index) + "&popularity=" + strconv.Itoa(networkManager.Me.Popularity) + "&host=" + networkManager.Me.Host + "&port=" + strconv.Itoa(networkManager.Me.Port));
-					if err != nil {
-					    panic(err.Error());
+					if err == nil {
+
+						//response to []byte
+						body, err := ioutil.ReadAll(response.Body);
+						if err != nil {
+						    panic(err.Error());
+						}
+
+						//extract data
+						networkManagerDist, _ := NetworkManagerFromJSON(body);
+
+						//update Peer
+						networkManager.update_Peer(networkManager.Peers[networkManager.get_peer_from_index(networkManagerDist.Me.Index)], networkManagerDist.Me);
+
+						if networkManagerDist.LastBlockIndex > networkManager.Blockchain.get_latest_block().Index {
+							networkManager.syncChain(networkManagerDist.Me, networkManagerDist.LastBlockIndex);
+							fmt.Println("Random peer sync");
+						}
 					}
 
-					//response to []byte
-					body, err := ioutil.ReadAll(response.Body);
-					if err != nil {
-					    panic(err.Error());
-					}
-
-
-					//extract data
-					networkManagerDist, _ := NetworkManagerFromJSON(body);
-
-					//update Peer
-					networkManager.update_Peer(networkManager.Peers[networkManager.get_peer_from_index(networkManagerDist.Me.Index)], networkManagerDist.Me);
-
-					if networkManagerDist.LastBlockIndex > networkManager.Blockchain.get_latest_block().Index {
-						networkManager.syncChain(networkManagerDist.Me, networkManagerDist.LastBlockIndex);
-						fmt.Println("Random peer sync");
-					}
 				}
 
 

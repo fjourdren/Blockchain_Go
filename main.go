@@ -1,7 +1,6 @@
 package main
 
 /* TODO */
-	//verify difficulty next block
 	//don't use the array length
 	//data processing
 	//network
@@ -17,7 +16,7 @@ package main
 
 	//sync chain
 	//repartition des noeud en fonction de la popularité
-	//next block difficulty
+
 
 import "os"
 import "fmt"
