@@ -5,17 +5,15 @@ import "fmt"
 type Blockchain struct {
 	NbBlocksForDifficultyCalculation int
     TimeBeetweenTwoBlock int
-    Difficulty int
     Chain []Block
 };
 
 
 
 
-func Construct_blockchain(nbBlocksForDifficultyCalculationVal int, timeBeetweenTwoBlockVal int, difficultyVal int) Blockchain {
-	blockchain := Blockchain{NbBlocksForDifficultyCalculation: nbBlocksForDifficultyCalculationVal, 
-							TimeBeetweenTwoBlock: timeBeetweenTwoBlockVal, 
-							Difficulty: difficultyVal};
+func Construct_blockchain(nbBlocksForDifficultyCalculationVal int, timeBeetweenTwoBlockVal int) Blockchain {
+	blockchain := Blockchain{NbBlocksForDifficultyCalculation: nbBlocksForDifficultyCalculationVal,
+							TimeBeetweenTwoBlock: timeBeetweenTwoBlockVal};
 
 	return blockchain;
 }
@@ -25,9 +23,10 @@ func Construct_blockchain(nbBlocksForDifficultyCalculationVal int, timeBeetweenT
 func(blockchain *Blockchain) create_genesis_block() Block {
 	fmt.Println("Mining genesis block...");
 
-	block := Block{Index: 0, 
-					Timestamp: 5, 
-					Difficulty: blockchain.Difficulty};
+	block := Block{Index: 0,
+					Timestamp: 5,
+					Difficulty: 1,
+					NextBlockDifficulty: 1};
 
 	block.mine_hash();
 
@@ -37,7 +36,8 @@ func(blockchain *Blockchain) create_genesis_block() Block {
 
 
 func(blockchain *Blockchain) block_can_be_add(block Block) bool {
-	if block.Difficulty == blockchain.Difficulty {
+	//fmt.Println(blockchain.get_latest_block());
+	if block.Difficulty == blockchain.get_latest_block().NextBlockDifficulty {
 		previous_block_Index := block.Index - 1;
 		previous_block := blockchain.get_block(previous_block_Index);
 
@@ -47,6 +47,7 @@ func(blockchain *Blockchain) block_can_be_add(block Block) bool {
 			return false;
 		}
 	} else {
+		//fmt.Println(block.Difficulty);
 		return false;
 	}
 }
@@ -89,16 +90,7 @@ func(blockchain *Blockchain) get_block(index int) Block {
 
 
 func(blockchain *Blockchain) get_latest_block() Block {
-
-	var biggestBlock Block;
-
-	for _, peerElement := range blockchain.Chain {
-		if biggestBlock.Index < peerElement.Index {
-			biggestBlock = peerElement;
-		}
-	}
-
-	return biggestBlock;
+	return blockchain.get_block(blockchain.get_chain_length() - 1);
 }
 
 
@@ -149,21 +141,30 @@ func(blockchain *Blockchain) need_to_change_difficulty() bool {
 
 
 func(blockchain *Blockchain) calculate_new_difficulty() int {
-	block_calculation_stop := blockchain.get_latest_block().Index;
-	block_calculation_start := block_calculation_stop - blockchain.NbBlocksForDifficultyCalculation;
 
-	average_time := blockchain.average_mining(block_calculation_start, block_calculation_stop);
+	block_calculation_stop := blockchain.get_latest_block();
+
+	block_calculation_start_index := block_calculation_stop.Index - blockchain.NbBlocksForDifficultyCalculation;
+	if block_calculation_start_index < 0 {
+		block_calculation_start_index = 0;
+	}
+
+	block_calculation_stop_index := block_calculation_stop.Index;
+
+	average_time := blockchain.average_mining(block_calculation_start_index, block_calculation_stop_index);
 
 	multipl_min := 0.75;
 	multipl_max := 1.25;
 
+	difficulty := block_calculation_stop.Difficulty;
+
 	if average_time > int(float64(blockchain.TimeBeetweenTwoBlock) * multipl_max) {
-		if blockchain.Difficulty != 0{
-			blockchain.Difficulty--;
+		if difficulty != 0 {
+			difficulty--;
 		}
     } else if average_time < int(float64(blockchain.TimeBeetweenTwoBlock) * multipl_min) {
-      blockchain.Difficulty++;
+      difficulty++;
     }
 
-    return blockchain.Difficulty;
+    return difficulty;
 }
