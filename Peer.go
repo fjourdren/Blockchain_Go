@@ -4,7 +4,7 @@ import "net/http"
 import "strconv"
 
 type Peer struct {
-    Index int
+    Index string
 	Popularity int
 	Host string
 	Port int
@@ -13,7 +13,7 @@ type Peer struct {
 
 
 
-func Construct_peer(index int, popularity int, host string, port int) Peer {
+func Construct_peer(index string, popularity int, host string, port int) Peer {
 	peer := Peer{Index: index,
 				Popularity: popularity,
 				Host: host,

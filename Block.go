@@ -2,7 +2,6 @@ package main
 
 import "strconv"
 import "strings"
-import "math/rand"
 import "encoding/json"
 
 type Block struct {
@@ -75,7 +74,7 @@ func(block Block) is_valid() bool {
 func(block *Block) mine_hash() {
     for !block.hash_is_valid(block.Hash) {
         block.Timestamp = now();
-        block.Nonce = rand.Intn(4294967296);
+        block.Nonce = random(4294967296);
         block.Hash = block.calculate_hash();
     }
 }

@@ -64,7 +64,7 @@ func miner(networkManager *NetworkManager) {
 
 				if len(networkManager.Peers) > 0 {
 					//ask to random peer the network if he has better block
-					response, err := networkManager.randomPeer("/synch?indexBlock=" + strconv.Itoa(networkManager.Blockchain.get_latest_block().Index) + "&index=" + strconv.Itoa(networkManager.Me.Index) + "&popularity=" + strconv.Itoa(networkManager.Me.Popularity) + "&host=" + networkManager.Me.Host + "&port=" + strconv.Itoa(networkManager.Me.Port));
+					response, err := networkManager.randomPeer("/synch?indexBlock=" + strconv.Itoa(networkManager.Blockchain.get_latest_block().Index) + "&index=" + networkManager.Me.Index + "&popularity=" + strconv.Itoa(networkManager.Me.Popularity) + "&host=" + networkManager.Me.Host + "&port=" + strconv.Itoa(networkManager.Me.Port));
 					if err == nil {
 
 						//response to []byte
@@ -77,7 +77,8 @@ func miner(networkManager *NetworkManager) {
 						networkManagerDist, _ := NetworkManagerFromJSON(body);
 
 						//update Peer
-						networkManager.update_Peer(networkManager.Peers[networkManager.get_peer_from_index(networkManagerDist.Me.Index)], networkManagerDist.Me);
+						//networkManager.update_Peer(networkManager.Peers[networkManager.get_peer_index(networkManagerDist.Me)], networkManagerDist.Me);
+						networkManager.Peers[networkManager.get_peer_index(networkManagerDist.Me)] = networkManagerDist.Me;
 
 						if networkManagerDist.LastBlockIndex > networkManager.Blockchain.get_latest_block().Index {
 							networkManager.syncChain(networkManagerDist.Me, networkManagerDist.LastBlockIndex);
@@ -86,7 +87,6 @@ func miner(networkManager *NetworkManager) {
 					}
 
 				}
-
 
 
 
@@ -106,7 +106,7 @@ func miner(networkManager *NetworkManager) {
 	    //add mined block
 		if networkManager.Blockchain.add_block_with_verification(block) && !restart {
 			fmt.Println("Block #" + strconv.Itoa(block.Index) + " difficulty(" + strconv.Itoa(block.Difficulty) + ") mined in " + time_to_mine + " with nonce " + strconv.Itoa(block.Nonce) + " (" + block.Hash + ")");
-			networkManager.broadcast("/foundBlock?indexBlock=" + strconv.Itoa(block.Index) + "&index=" + strconv.Itoa(networkManager.Me.Index) + "&popularity=" + strconv.Itoa(networkManager.Me.Popularity) + "&host=" + networkManager.Me.Host + "&port=" + strconv.Itoa(networkManager.Me.Port));
+			networkManager.broadcast("/foundBlock?indexBlock=" + strconv.Itoa(block.Index) + "&index=" + networkManager.Me.Index + "&popularity=" + strconv.Itoa(networkManager.Me.Popularity) + "&host=" + networkManager.Me.Host + "&port=" + strconv.Itoa(networkManager.Me.Port));
 		}
 
 	}

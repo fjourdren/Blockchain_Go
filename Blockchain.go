@@ -36,7 +36,6 @@ func(blockchain *Blockchain) create_genesis_block() Block {
 
 
 func(blockchain *Blockchain) block_can_be_add(block Block) bool {
-	//fmt.Println(blockchain.get_latest_block());
 	if block.Difficulty == blockchain.get_latest_block().NextBlockDifficulty {
 		previous_block_Index := block.Index - 1;
 		previous_block := blockchain.get_block(previous_block_Index);
@@ -47,7 +46,6 @@ func(blockchain *Blockchain) block_can_be_add(block Block) bool {
 			return false;
 		}
 	} else {
-		//fmt.Println(block.Difficulty);
 		return false;
 	}
 }

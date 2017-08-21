@@ -26,7 +26,7 @@ func NetworkManagerFromJSON(content []byte) (*NetworkManager, error) {
 
 
 
-func Construct_NetworkManager(index int, popularity int, host string, port int, blockchain *Blockchain) NetworkManager {
+func Construct_NetworkManager(index string, popularity int, host string, port int, blockchain *Blockchain) NetworkManager {
 	me := Construct_peer(index, popularity, host, port);
 
 	networkManager := NetworkManager{Me: me,
@@ -36,15 +36,15 @@ func Construct_NetworkManager(index int, popularity int, host string, port int, 
 }
 
 
-func Construct_Init_NetworkManager(index int, popularity int, host string, port int, blockchain *Blockchain, initHost string, initPort int) NetworkManager {
+func Construct_Init_NetworkManager(index string, popularity int, host string, port int, blockchain *Blockchain, initHost string, initPort int) NetworkManager {
 	networkManager := Construct_NetworkManager(index, popularity, host, port, blockchain);
 
-	initpeer := Construct_peer(0, 0, initHost, initPort)
+	initpeer := Construct_peer("0", 0, initHost, initPort)
 	networkManager.add_Peer(initpeer);
 
-	response, err := networkManager.Peers[0].request("/join?popularity=" + strconv.Itoa(networkManager.Me.Popularity) + "&host=" + networkManager.Me.Host + "&port=" + strconv.Itoa(networkManager.Me.Port));
+	response, err := networkManager.Peers[0].request("/join?index=" + networkManager.Me.Index + "&popularity=" + strconv.Itoa(networkManager.Me.Popularity) + "&host=" + networkManager.Me.Host + "&port=" + strconv.Itoa(networkManager.Me.Port));
 	if err != nil {
-	    networkManager.remove_Peer(networkManager.Peers[0]);
+	    panic("Unknown init host.");
 	}
 
 
@@ -58,11 +58,11 @@ func Construct_Init_NetworkManager(index int, popularity int, host string, port 
 	networkManagerDist, _ := NetworkManagerFromJSON(body);
 
 	//update init Peer
-	networkManager.update_Peer(networkManager.Peers[0], networkManagerDist.Me);
+	//networkManager.update_Peer(networkManager.Peers[0], networkManagerDist.Me);
+	networkManager.Peers[0] = networkManagerDist.Me;
 
 	//sync chain
 	networkManager.syncChain(networkManagerDist.Me, networkManagerDist.LastBlockIndex);
-
 
 	for _, peerElement := range networkManagerDist.Peers {
 		if peerElement != networkManager.Me {
@@ -83,11 +83,10 @@ func(networkManager *NetworkManager) server() {
 	//routes
 	http.HandleFunc("/join", func(writer http.ResponseWriter, request *http.Request) {
 
-		index, err := strconv.Atoi(request.URL.Query().Get(("index")));
-		popularity, err1 := strconv.Atoi(request.URL.Query().Get("popularity"));
-		port, err2 := strconv.Atoi(request.URL.Query().Get("port"));
+		popularity, err := strconv.Atoi(request.URL.Query().Get("popularity"));
+		port, err1 := strconv.Atoi(request.URL.Query().Get("port"));
 
-		if err != nil && err1 != nil && err2 != nil {
+		if err != nil && err1 != nil {
   			if err != nil {
   				fmt.Print(err);
   			}
@@ -95,22 +94,20 @@ func(networkManager *NetworkManager) server() {
   			if err1 != nil {
   				fmt.Print(err1);
   			}
-
-  			if err2 != nil {
-  				fmt.Print(err1);
-  			}
   		} else {
-			peer := Construct_peer(index, popularity, request.URL.Query().Get("host"), port);
 
-			if !networkManager.has_peer(peer) {
-				networkManager.add_Peer(peer);
-				networkManager.LastBlockIndex = networkManager.Blockchain.get_latest_block().Index;
-			}
-
-	        payload, _ := json.Marshal(networkManager);
+  			networkManager.LastBlockIndex = networkManager.Blockchain.get_latest_block().Index;
+  			payload, _ := json.Marshal(networkManager);
 
 			writer.Header().Add("Content-Type", "application/json");
 			writer.Write(payload);
+
+			peer := Construct_peer(request.URL.Query().Get(("index")), popularity, request.URL.Query().Get("host"), port);
+
+			if !networkManager.has_peer(peer) {
+				networkManager.add_Peer(peer);
+			}
+
 		}
     });
 
@@ -162,7 +159,6 @@ func(networkManager *NetworkManager) server() {
 	http.HandleFunc("/foundBlock", func(writer http.ResponseWriter, request *http.Request) {
 
     	indexBlock, err := strconv.Atoi(request.URL.Query().Get(("indexBlock")));
-    	index, err := strconv.Atoi(request.URL.Query().Get(("index")));
     	popularity, err1 := strconv.Atoi(request.URL.Query().Get("popularity"));
 		port, err2 := strconv.Atoi(request.URL.Query().Get("port"));
 
@@ -179,10 +175,10 @@ func(networkManager *NetworkManager) server() {
 				fmt.Print(err2);
     		}
 		} else {
-			peer := Construct_peer(index, popularity, request.URL.Query().Get("host"), port);
+			peer := Construct_peer(request.URL.Query().Get(("index")), popularity, request.URL.Query().Get("host"), port);
 
 			//update Peer
-			networkManager.update_Peer(networkManager.Peers[networkManager.get_peer_from_index(peer.Index)], peer);
+			networkManager.update_Peer(networkManager.Peers[networkManager.get_peer_index(peer)], peer);
 
 			if indexBlock > networkManager.Blockchain.get_latest_block().Index {
 				networkManager.syncChain(peer, indexBlock);
@@ -200,7 +196,6 @@ func(networkManager *NetworkManager) server() {
     http.HandleFunc("/synch", func(writer http.ResponseWriter, request *http.Request) {
 
     	indexBlock, err := strconv.Atoi(request.URL.Query().Get(("indexBlock")));
-    	index, err := strconv.Atoi(request.URL.Query().Get(("index")));
     	popularity, err1 := strconv.Atoi(request.URL.Query().Get("popularity"));
 		port, err2 := strconv.Atoi(request.URL.Query().Get("port"));
 
@@ -217,10 +212,10 @@ func(networkManager *NetworkManager) server() {
 				fmt.Print(err2);
     		}
 		} else {
-			peer := Construct_peer(index, popularity, request.URL.Query().Get("host"), port);
+			peer := Construct_peer(request.URL.Query().Get(("index")), popularity, request.URL.Query().Get("host"), port);
 
 			//update Peer
-			networkManager.update_Peer(networkManager.Peers[networkManager.get_peer_from_index(peer.Index)], peer);
+			networkManager.update_Peer(networkManager.Peers[networkManager.get_peer_index(peer)], peer);
 
 			networkManager.LastBlockIndex = networkManager.Blockchain.get_latest_block().Index;
 
@@ -243,20 +238,8 @@ func(networkManager *NetworkManager) server() {
 }
 
 
-func(networkManager *NetworkManager) get_peer_from_index(indexPeer int) int {
-
-	for index, peerElement := range networkManager.Peers {
-		if peerElement.Index == indexPeer {
-			return index;
-		}
-	}
-
-	return -1;
-
-}
-
-
 func(networkManager *NetworkManager) add_Peer(peer Peer) {
+
 	networkManager.Peers = append(networkManager.Peers, peer);
 	networkManager.Me.Popularity = len(networkManager.Peers);
 }
@@ -282,7 +265,7 @@ func(networkManager *NetworkManager) update_Peer(oldPeer Peer, newPeer Peer) {
 func(networkManager *NetworkManager) get_peer_index(peer Peer) int {
 
 	for index, peerElement := range networkManager.Peers {
-		if peerElement == peer {
+		if peerElement.Index == peer.Index {
 			return index;
 		}
 	}
@@ -307,10 +290,10 @@ func(networkManager *NetworkManager) has_peer(peer Peer) bool {
 
 func(networkManager *NetworkManager) broadcast(url string) {
 	for _, peer := range networkManager.Peers {
-	    _, err := peer.request(url);
-      if err != nil {
-    	    networkManager.remove_Peer(peer);
-    	}
+		_, err := peer.request(url);
+		if err != nil {
+		    networkManager.remove_Peer(peer);
+		}
 	}
 }
 
@@ -320,9 +303,9 @@ func(networkManager *NetworkManager) download_block(peer Peer, startIndex int, s
 	stopIndexString := strconv.Itoa(stopIndex);
 
 	content, err := peer.request("/getblock?startIndex=" + startIndexString + "&stopIndex=" + stopIndexString);
-  if err != nil {
-      networkManager.remove_Peer(peer);
-  }
+	if err != nil {
+		networkManager.remove_Peer(peer);
+	}
 
 	body, err := ioutil.ReadAll(content.Body)
 	if err != nil {
@@ -542,13 +525,12 @@ func(networkManager *NetworkManager) syncChain(peer Peer, index int) {
 
 func(networkManager *NetworkManager) randomPeer(url string) (*http.Response, error) {
 
- 	//s := rand.NewSource(time.Now().Unix());
 	n := rand.Int() % len(networkManager.Peers);
 	peer := networkManager.Peers[n];
 	response, err := peer.request(url);
-  if err != nil {
-      networkManager.remove_Peer(peer);
-  }
+	if err != nil {
+		networkManager.remove_Peer(peer);
+	}
 
 	return response, err;
 
