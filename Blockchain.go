@@ -2,6 +2,7 @@ package main
 
 import "fmt"
 
+
 type Blockchain struct {
 	NbBlocksForDifficultyCalculation int
     TimeBeetweenTwoBlock int
@@ -19,14 +20,13 @@ func Construct_blockchain(nbBlocksForDifficultyCalculationVal int, timeBeetweenT
 }
 
 
-
 func(blockchain *Blockchain) create_genesis_block() Block {
 	fmt.Println("Mining genesis block...");
 
 	block := Block{Index: 0,
 					Timestamp: 5,
-					Difficulty: 1,
-					NextBlockDifficulty: 1};
+					Difficulty: 2,
+					NextBlockDifficulty: 2};
 
 	block.mine_hash();
 
