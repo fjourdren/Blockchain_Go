@@ -1,10 +1,9 @@
 package main
 
 import "fmt"
-import "time"
+//import "time"
 import "strconv"
 import "math/rand"
-import "io/ioutil"
 
 
 
@@ -25,7 +24,7 @@ func miner(networkManager *NetworkManager) {
 	restart := false
 	for {
 		restart = false;
-		time_mine_start := time.Now();
+		//time_mine_start := time.Now();
 
 		latest_block := networkManager.Blockchain.get_latest_block();
 		next_block_difficulty := latest_block.NextBlockDifficulty;
@@ -62,7 +61,7 @@ func miner(networkManager *NetworkManager) {
 	        nbMine++;
 			if now() > startTime + timeBeetweenNetworkSync {
 
-				if len(networkManager.Peers) > 0 {
+				/*if len(networkManager.Peers) > 0 {
 					//ask to random peer the network if he has better block
 					response, err := networkManager.randomPeer("/synch?indexBlock=" + strconv.Itoa(networkManager.Blockchain.get_latest_block().Index) + "&index=" + networkManager.Me.Index + "&popularity=" + strconv.Itoa(networkManager.Me.Popularity) + "&host=" + networkManager.Me.Host + "&port=" + strconv.Itoa(networkManager.Me.Port));
 					if err == nil {
@@ -86,7 +85,7 @@ func miner(networkManager *NetworkManager) {
 						}
 					}
 
-				}
+				}*/
 
 
 
@@ -100,13 +99,16 @@ func miner(networkManager *NetworkManager) {
 			}
 	    }
 
-	    time_to_mine := time.Since(time_mine_start).String();
+	    //time_to_mine := time.Since(time_mine_start).String();
 
 
 	    //add mined block
 		if networkManager.Blockchain.add_block_with_verification(block) && !restart {
-			fmt.Println("Block #" + strconv.Itoa(block.Index) + " difficulty(" + strconv.Itoa(block.Difficulty) + ") mined in " + time_to_mine + " with nonce " + strconv.Itoa(block.Nonce) + " (" + block.Hash + ")");
-			networkManager.broadcast("/foundBlock?indexBlock=" + strconv.Itoa(block.Index) + "&index=" + networkManager.Me.Index + "&popularity=" + strconv.Itoa(networkManager.Me.Popularity) + "&host=" + networkManager.Me.Host + "&port=" + strconv.Itoa(networkManager.Me.Port));
+			//fmt.Println("Block #" + strconv.Itoa(block.Index) + " difficulty(" + strconv.Itoa(block.Difficulty) + ") mined in " + time_to_mine + " with nonce " + strconv.Itoa(block.Nonce) + " (" + block.Hash + ")");
+			//networkManager.broadcast_udp("/foundBlock?indexBlock=" + strconv.Itoa(block.Index) + "&index=" + networkManager.Me.Index + "&popularity=" + strconv.Itoa(networkManager.Me.Popularity) + "&host=" + networkManager.Me.Host + "&port=" + strconv.Itoa(networkManager.Me.Port));
+			packet := Construct_Packet(networkManager.Me, "BROADCAST", "FOUNDBLOCK", []byte(strconv.Itoa(block.Index)));
+  			packetJson := packet.to_json();
+			networkManager.broadcast(packetJson);
 		}
 
 	}

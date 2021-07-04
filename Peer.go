@@ -1,7 +1,7 @@
 package main
 
-import "net/http"
 import "strconv"
+import "net"
 
 type Peer struct {
     Index string
@@ -23,7 +23,24 @@ func Construct_peer(index string, popularity int, host string, port int) Peer {
 }
 
 
-func(peer *Peer) request(url string) (*http.Response, error) {
-	resp, err := http.Get(peer.Host + ":" + strconv.Itoa(peer.Port) + url);
-	return resp, err;
+func(peer *Peer) get_address() string {
+	return peer.Host + ":" + strconv.Itoa(peer.Port);
+}
+
+
+func(peer *Peer) tcp(content []byte) []byte {
+	conn, err := net.Dial("tcp", peer.Host + ":" + strconv.Itoa(peer.Port))
+
+	check_error(err);
+
+	//send
+	conn.Write([]byte(content));
+
+	//receive
+	buff := make([]byte, 800000);
+	n, _ := conn.Read(buff);
+
+	conn.Close();
+	
+	return buff[:n];
 }
