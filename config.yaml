@@ -1,0 +1,11 @@
+blockchain:
+  difficulty_calculation_blocks: 50
+  target_block_time: 20
+
+network:
+  host: "127.0.0.1"
+  port: 8080
+
+miner:
+  network_sync_interval: 1
+  max_nonce: 4294967296 
